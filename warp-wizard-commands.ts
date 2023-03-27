@@ -45,7 +45,10 @@ const addCommand = async () => {
 
     while (true) {
         const file = await p.text({
-            message: 'Auto-select group when file is detected in directory:',
+            message:
+                detectFiles.length === 0
+                    ? 'Auto-select group when file is detected in directory:'
+                    : 'Add another file?',
             placeholder: 'e.g. metro.config.js (leave empty to continue)',
         });
 
@@ -81,20 +84,22 @@ const addCommand = async () => {
             break;
         }
 
-        const title = await p.text({
-            message: 'Command title:',
-            placeholder: 'Optional, shows as the title in the tab',
-        });
-
-        if (p.isCancel(title)) {
-            onCancel();
-        }
-
         const longRunning = await p.confirm({
             message: 'Long running?',
         });
 
         if (p.isCancel(longRunning)) {
+            onCancel();
+        }
+
+        const title = longRunning
+            ? await p.text({
+                  message: 'Command title:',
+                  placeholder: 'Optional, shows as the title in the tab',
+              })
+            : undefined;
+
+        if (p.isCancel(title)) {
             onCancel();
         }
 
