@@ -57,15 +57,6 @@ const unlinkDirectoryFromConfig = () => {
     fs.writeFileSync(directoryLaunchConfigPath, YAML.stringify(directoryLinks));
 };
 
-const tabColors = [
-    { label: 'Red', value: 'red' },
-    { label: 'Green', value: 'green' },
-    { label: 'Yellow', value: 'yellow' },
-    { label: 'Blue', value: 'blue' },
-    { label: 'Magenta', value: 'magenta' },
-    { label: 'Cyan', value: 'cyan' },
-] as const;
-
 const selectCommandsFromGroup = async (
     group: CommandGroup,
 ): Promise<Command[]> => {
