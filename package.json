@@ -1,0 +1,41 @@
+{
+    "name": "warp-wizard",
+    "version": "0.1.0",
+    "description": "Something here",
+    "main": "index.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/joetannenbaum/warp-wizard.git"
+    },
+    "keywords": [
+        "warp",
+        "cli",
+        "command",
+        "line",
+        "terminal",
+        "launch",
+        "config"
+    ],
+    "author": "Joe Tannenbaum",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/joetannenbaum/warp-wizard/issues"
+    },
+    "homepage": "https://github.com/joetannenbaum/warp-wizard#readme",
+    "dependencies": {
+        "@clack/prompts": "^0.6.3",
+        "commander": "^10.0.0",
+        "yaml": "^2.2.1",
+        "yargs": "^17.7.1"
+    },
+    "devDependencies": {
+        "@types/node": "^18.15.0",
+        "@types/yargs": "^17.0.22",
+        "jiti": "^1.18.2",
+        "typescript": "^4.9.5"
+    }
+}
