@@ -1,6 +1,6 @@
 {
     "name": "warp-wizard",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "A CLI helper for interacting with the Warp terminal app",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
