@@ -135,6 +135,11 @@ const commandGroup = async () => {
             break;
         }
 
+        const title = await p.text({
+            message: 'Command title:',
+            placeholder: 'Optional, shows as the title in the tab',
+        });
+
         const longRunning = await p.confirm({
             message: 'Long running?',
         });
@@ -142,13 +147,6 @@ const commandGroup = async () => {
         if (p.isCancel(longRunning)) {
             onCancel();
         }
-
-        const title = longRunning
-            ? await p.text({
-                  message: 'Command title:',
-                  placeholder: 'Optional, shows as the title in the tab',
-              })
-            : undefined;
 
         if (p.isCancel(title)) {
             onCancel();

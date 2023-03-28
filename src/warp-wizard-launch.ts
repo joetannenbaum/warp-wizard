@@ -70,6 +70,8 @@ const unlinkDirectoryFromConfig = () => {
 const selectCommandsFromGroup = async (
     group: CommandGroup,
 ): Promise<Command[]> => {
+    await p.note(group.title, 'Auto-detected Command Group');
+
     const commands = (await p.multiselect({
         message: 'Commands to run:',
         options: group.commands.map((command) => ({
