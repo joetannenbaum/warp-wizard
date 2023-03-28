@@ -16,6 +16,9 @@ import path from 'path';
 import { runJxa } from 'run-jxa';
 import { Command as Commander } from 'commander';
 import child_process from 'child_process';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const program = new Commander();
 
@@ -171,6 +174,38 @@ const waitForWarpToRegisterLaunchConfig = async () => {
     spinner.stop('Done');
 };
 
+const replacePlaceholderInCommands = async (commands: Command[]) => {
+    for (const command of commands) {
+        const matches = command.command.match(/WARP_WIZARD_(\w+)/g);
+
+        if (!matches) {
+            continue;
+        }
+
+        for (const match of matches) {
+            const key = match.replace('WARP_WIZARD_', '');
+
+            const value = await p.text({
+                message: `Enter value for ${key}:`,
+                initialValue: process.env[key] || '',
+                validate(value) {
+                    if (value.trim().length === 0) {
+                        return 'Value cannot be empty';
+                    }
+                },
+            });
+
+            if (p.isCancel(value)) {
+                onCancel();
+            }
+
+            command.command = command.command.replace(match, value.toString());
+        }
+    }
+
+    return commands;
+};
+
 const createNewLaunchConfig = async () => {
     const configDefaultName = dir.split('/').pop();
 
@@ -190,7 +225,7 @@ const createNewLaunchConfig = async () => {
         onCancel();
     }
 
-    const commands = await getCommands();
+    const rawCommands = await getCommands();
 
     while (true) {
         const command = await p.text({
@@ -227,12 +262,14 @@ const createNewLaunchConfig = async () => {
             break;
         }
 
-        commands.push({
+        rawCommands.push({
             title: commandTitle?.toString(),
             command: command.toString(),
             longRunning: !!longRunning,
         });
     }
+
+    const commands = await replacePlaceholderInCommands(rawCommands);
 
     const hasLongRunning = commands.find((command) => command.longRunning);
 
