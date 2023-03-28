@@ -5,7 +5,10 @@ import YAML from 'yaml';
 import os from 'os';
 
 export const configDirectory = path.join(os.homedir(), '.warp-wizard');
-export const groupPath = path.join(configDirectory, 'command-groups.yaml');
+export const commandGroupConfigPath = path.join(
+    configDirectory,
+    'command-groups.yaml',
+);
 export const directoryLaunchConfigPath = path.join(
     configDirectory,
     'directory-launch-configs.yaml',
@@ -20,14 +23,14 @@ if (!fs.existsSync(configDirectory)) {
     fs.mkdirSync(configDirectory);
 }
 
-[groupPath, directoryLaunchConfigPath].forEach((p) => {
+[commandGroupConfigPath, directoryLaunchConfigPath].forEach((p) => {
     if (!fs.existsSync(p)) {
         fs.writeFileSync(p, '');
     }
 });
 
 export const fetchCommandGroups = (): CommandGroup[] => {
-    const groups = fs.readFileSync(groupPath, 'utf-8');
+    const groups = fs.readFileSync(commandGroupConfigPath, 'utf-8');
 
     return YAML.parse(groups) || [];
 };

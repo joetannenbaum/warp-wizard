@@ -2,7 +2,15 @@ import * as p from '@clack/prompts';
 import YAML from 'yaml';
 import fs from 'fs';
 import { CommandGroup } from './types.js';
-import { fetchCommandGroups, groupPath } from './common.js';
+import { fetchCommandGroups, commandGroupConfigPath } from './common.js';
+import { Command as Commander } from 'commander';
+import child_process from 'child_process';
+
+const program = new Commander();
+
+program.option('-e, --edit', 'edit your existing command groups');
+
+program.parse(process.argv);
 
 const onCancel = () => {
     p.cancel('Ok, see you later.');
@@ -14,12 +22,55 @@ const saveCommandGroup = (group: CommandGroup) => {
 
     groups.push(group);
 
-    fs.writeFileSync(groupPath, YAML.stringify(groups));
+    fs.writeFileSync(commandGroupConfigPath, YAML.stringify(groups));
 
     return groups;
 };
 
-const addCommand = async () => {
+const editCommandGroups = async () => {
+    await p.intro("Ok! Let's edit your command groups.");
+
+    await p.note(
+        commandGroupConfigPath,
+        'Config associated with this directory',
+    );
+
+    const action = await p.select({
+        message: 'What would you like to do?',
+        options: [
+            {
+                value: 'open',
+                label: 'Open it in the default editor',
+            },
+            {
+                value: 'reveal',
+                label: 'Reveal it in Finder',
+            },
+        ],
+    });
+
+    if (p.isCancel(action)) {
+        onCancel();
+    }
+
+    if (action === 'open') {
+        await child_process.exec(`open ${commandGroupConfigPath}`);
+    }
+
+    if (action === 'reveal') {
+        await child_process.exec(`open -R ${commandGroupConfigPath}`);
+    }
+
+    await p.outro("It's editing time!");
+
+    return;
+};
+
+const commandGroup = async () => {
+    if (program.opts().edit) {
+        return editCommandGroups();
+    }
+
     const groups = fetchCommandGroups();
 
     await p.intro('Add a new command group');
@@ -48,7 +99,7 @@ const addCommand = async () => {
             message:
                 detectFiles.length === 0
                     ? 'Auto-select group when file is detected in directory:'
-                    : 'Add another file?',
+                    : 'Add another file to look for?',
             placeholder: 'e.g. metro.config.js (leave empty to continue)',
         });
 
@@ -119,4 +170,4 @@ const addCommand = async () => {
     });
 };
 
-addCommand();
+commandGroup();
