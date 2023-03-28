@@ -22,7 +22,7 @@ const saveCommandGroup = (group: CommandGroup) => {
 const addCommand = async () => {
     const groups = fetchCommandGroups();
 
-    await p.intro('Add a new command');
+    await p.intro('Add a new command group');
 
     const groupName = await p.text({
         message: 'Group Name:',
