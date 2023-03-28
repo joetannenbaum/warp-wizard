@@ -4,6 +4,8 @@ Warp Wizard is a command line tool for interacting with the [Warp](https://warp.
 
 Currently, `warp-wizard` primarily handles the creation and running of [Warp launch configurations](https://docs.warp.dev/features/sessions/launch-configurations).
 
+![Demo](docs/images/demo.gif)
+
 ## Installation
 
 ```bash
