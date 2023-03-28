@@ -4,14 +4,13 @@ import {
     directoryLaunchConfigPath,
     fetchCommandGroups,
     warpLaunchConfigsPath,
-} from './common';
+} from './common.js';
 import {
     Command,
     CommandGroup,
     LaunchConfig,
     LaunchConfigTab,
-    LaunchConfigTabLayout,
-} from './types';
+} from './types.js';
 import fs from 'fs';
 import path from 'path';
 import { runJxa } from 'run-jxa';

@@ -1,8 +1,8 @@
 import * as p from '@clack/prompts';
 import YAML from 'yaml';
 import fs from 'fs';
-import { CommandGroup } from './types';
-import { fetchCommandGroups, groupPath } from './common';
+import { CommandGroup } from './types.js';
+import { fetchCommandGroups, groupPath } from './common.js';
 
 const onCancel = () => {
     p.cancel('Ok, see you later.');

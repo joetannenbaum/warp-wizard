@@ -7,6 +7,9 @@
     "scripts": {
         "build": "npx tsc"
     },
+    "bin": {
+        "warp-wizard": "dist/index.js"
+    },
     "type": "module",
     "repository": {
         "type": "git",
