@@ -140,15 +140,15 @@ const commandGroup = async () => {
             placeholder: 'Optional, shows as the title in the tab',
         });
 
+        if (p.isCancel(title)) {
+            onCancel();
+        }
+
         const longRunning = await p.confirm({
             message: 'Long running?',
         });
 
         if (p.isCancel(longRunning)) {
-            onCancel();
-        }
-
-        if (p.isCancel(title)) {
             onCancel();
         }
 
