@@ -116,6 +116,18 @@ const commandGroup = async () => {
 
     const commands: CommandGroup['commands'] = [];
 
+    await p.note(
+        [
+            'To use a placeholder in a command, prefix it with WARP_WIZARD_.',
+            'The wizard will prompt you for a value when you use the command.',
+            '',
+            'It will look for environment variables as a default value,',
+            'so if you have a placeholder such as WARP_WIZARD_APP_URL, it will',
+            'use the value of the environment variable APP_URL if it exists.',
+        ].join('\n'),
+        'Placeholders',
+    );
+
     while (true) {
         const command = await p.text({
             message: 'Command to run:',
