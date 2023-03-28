@@ -2,9 +2,10 @@
     "name": "warp-wizard",
     "version": "0.1.0",
     "description": "A CLI helper for interacting with the Warp terminal app",
-    "main": "index.ts",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "build": "npx tsc"
     },
     "type": "module",
     "repository": {
@@ -21,7 +22,7 @@
         "config"
     ],
     "author": "Joe Tannenbaum",
-    "license": "ISC",
+    "license": "MIT",
     "bugs": {
         "url": "https://github.com/joetannenbaum/warp-wizard/issues"
     },

@@ -1,14 +1,14 @@
 {
     "compilerOptions": {
-        "noEmit": true,
         "module": "ESNext",
         "target": "ESNext",
         "moduleResolution": "node",
         "strict": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "declaration": true,
+        "outDir": "dist"
     },
-    "include": ["*.ts"],
-    "exclude": ["node_modules"]
+    "include": ["src", "index.ts"]
 }

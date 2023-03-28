@@ -115,17 +115,23 @@ const getCommands = async () => {
                     value: group,
                     label: group.title,
                 }))
-                .concat({
-                    value: undefined,
-                    label: 'None of the above',
-                }),
-        })) as CommandGroup | undefined;
+                .concat([
+                    {
+                        value: {
+                            title: 'None of the above',
+                            commands: [],
+                            detectFiles: [],
+                        },
+                        label: 'None of the above',
+                    },
+                ]),
+        })) as CommandGroup;
 
         if (p.isCancel(group)) {
             onCancel();
         }
 
-        if (group) {
+        if (group.title !== 'None of the above') {
             return selectCommandsFromGroup(group);
         }
     }
