@@ -5,7 +5,13 @@ import {
     fetchCommandGroups,
     warpLaunchConfigsPath,
 } from './common';
-import { Command, CommandGroup } from './types';
+import {
+    Command,
+    CommandGroup,
+    LaunchConfig,
+    LaunchConfigTab,
+    LaunchConfigTabLayout,
+} from './types';
 import fs from 'fs';
 import path from 'path';
 import { runJxa } from 'run-jxa';
@@ -13,6 +19,8 @@ import { Command as Commander } from 'commander';
 import child_process from 'child_process';
 
 const program = new Commander();
+
+const waitForWarpInSeconds = 15;
 
 program
     .option(
@@ -76,6 +84,16 @@ const selectCommandsFromGroup = async (
     return commands;
 };
 
+const runLaunchConfig = async (configName: string) => {
+    const launchConfig = YAML.parse(fs.readFileSync(configName, 'utf8'));
+
+    runJxa(`const se = Application('System Events');
+        Application('Warp').activate();
+        se.keystroke('l', { using: ['command down', 'control down'] });
+        se.keystroke('${launchConfig.name}');
+        se.keyCode(36);`);
+};
+
 const getCommands = async () => {
     const groups = fetchCommandGroups();
 
@@ -115,7 +133,7 @@ const getCommands = async () => {
     return [];
 };
 
-const chunkArray = (arr: any[], chunkSize: number) => {
+const chunkArray = <T>(arr: T[], chunkSize: number): T[][] => {
     const res = [];
 
     for (let i = 0; i < arr.length; i += chunkSize) {
@@ -124,6 +142,28 @@ const chunkArray = (arr: any[], chunkSize: number) => {
     }
 
     return res;
+};
+
+const getCommandsAsTabs = (commands: Command[]): LaunchConfigTab[] => {
+    return commands.map((command) => ({
+        title: command.title,
+        layout: {
+            cwd: dir,
+            commands: [{ exec: command.command }],
+        },
+    }));
+};
+
+const waitForWarpToRegisterLaunchConfig = async () => {
+    const spinner = p.spinner();
+
+    spinner.start('Waiting for Warp');
+
+    await new Promise((resolve) =>
+        setTimeout(resolve, 1000 * waitForWarpInSeconds),
+    );
+
+    spinner.stop('Done');
 };
 
 const createNewLaunchConfig = async () => {
@@ -211,12 +251,13 @@ const createNewLaunchConfig = async () => {
         onCancel();
     }
 
-    const tabs = [];
+    const tabs: LaunchConfigTab[] = [];
 
     const oneOff = commands.filter((command) => !command.longRunning);
     const longRunning = commands.filter((command) => command.longRunning);
 
     if (oneOff.length > 0) {
+        // Non long running commands go in the first tab
         tabs.push({
             layout: {
                 cwd: dir,
@@ -226,17 +267,9 @@ const createNewLaunchConfig = async () => {
     }
 
     if (layout === 'tabs') {
-        longRunning.forEach((longRunnCommand) => {
-            tabs.push({
-                title: longRunnCommand.title,
-                layout: {
-                    cwd: dir,
-                    commands: [{ exec: longRunnCommand.command }],
-                },
-            });
-        });
+        tabs.concat(getCommandsAsTabs(longRunning));
     } else {
-        const numberOfPanes = await p.text({
+        const numberOfPanesRaw = await p.text({
             message: 'Max number of panes per tab?',
             initialValue: '4',
             validate(value) {
@@ -250,50 +283,36 @@ const createNewLaunchConfig = async () => {
             },
         });
 
-        if (p.isCancel(numberOfPanes)) {
+        if (p.isCancel(numberOfPanesRaw)) {
             onCancel();
         }
 
-        const numberOfPanesInt = Number(numberOfPanes);
+        const numberOfPanes = Number(numberOfPanesRaw);
 
-        if (numberOfPanesInt === 1) {
+        if (numberOfPanes === 1) {
             // Just split it into tabs
-            longRunning.forEach((longRunningCommand) => {
+            tabs.concat(getCommandsAsTabs(longRunning));
+        } else {
+            chunkArray(longRunning, numberOfPanes).forEach((commands) => {
                 tabs.push({
-                    title: longRunningCommand.title,
                     layout: {
-                        cwd: dir,
-                        commands: [{ exec: longRunningCommand.command }],
+                        split_direction: 'horizontal',
+                        panes: chunkArray(commands, 2).map((commands) => ({
+                            split_direction: 'vertical',
+                            panes: commands.map((command) => ({
+                                cwd: dir,
+                                commands: [{ exec: command.command }],
+                            })),
+                        })),
                     },
                 });
             });
-        } else {
-            chunkArray(longRunning, Number(numberOfPanes)).forEach(
-                (commands) => {
-                    tabs.push({
-                        layout: {
-                            split_direction: 'horizontal',
-                            panes: chunkArray(commands, 2).map((commands) => ({
-                                split_direction: 'vertical',
-                                panes: commands.map((command) => ({
-                                    cwd: dir,
-                                    commands: [{ exec: command.command }],
-                                })),
-                            })),
-                        },
-                    });
-                },
-            );
         }
     }
 
-    const finalYaml = {
-        name: configName,
-        windows: [
-            {
-                tabs,
-            },
-        ],
+    const finalYaml: LaunchConfig = {
+        name: configName.toString(),
+        windows: [{ tabs }],
     };
 
     const filename = configName
@@ -313,6 +332,29 @@ const createNewLaunchConfig = async () => {
     fs.writeFileSync(configPath, YAML.stringify(finalYaml));
 
     linkDirectoryToConfig(configPath);
+
+    await p.note(configPath, 'Launch config created');
+
+    await p.note(
+        `It takes about ${waitForWarpInSeconds} seconds for Warp to register the new launch config.`,
+        'Heads up',
+    );
+
+    const shouldWait = await p.confirm({
+        message: 'Do you want me to wait with you?',
+    });
+
+    if (shouldWait) {
+        await waitForWarpToRegisterLaunchConfig();
+    }
+
+    const shouldOpen = await p.confirm({
+        message: 'Do you want to run your launch config now?',
+    });
+
+    if (shouldOpen) {
+        await runLaunchConfig(configPath);
+    }
 
     await p.outro('All done!');
 };
@@ -370,15 +412,18 @@ const editLaunchConfig = async () => {
 };
 
 const unlinkLaunchConfig = async () => {
+    await p.intro("Ok, let's unlink this launch config");
+
     if (!associatedConfig) {
         await p.note(
             'No launch config associated with this directory!',
             'Nothing to unlink',
         );
+
+        await p.outro('So... I guess we are done here.');
+
         return;
     }
-
-    await p.intro("Ok, let's unlink this launch config");
 
     await p.note(associatedConfig, 'Config associated with this directory');
 
@@ -386,15 +431,13 @@ const unlinkLaunchConfig = async () => {
         message: 'Are you sure you want to unlink this launch config?',
     });
 
-    if (p.isCancel(unlink)) {
+    if (p.isCancel(unlink) || !unlink) {
         onCancel();
     }
 
-    if (unlink) {
-        unlinkDirectoryFromConfig();
+    unlinkDirectoryFromConfig();
 
-        await p.outro('Launch config unlinked!');
-    }
+    await p.outro('Launch config unlinked!');
 };
 
 const linkLaunchConfig = async () => {
@@ -477,13 +520,7 @@ export const launchConfig = async () => {
         return createNewLaunchConfig();
     }
 
-    const launchConfig = YAML.parse(fs.readFileSync(associatedConfig, 'utf8'));
-
-    runJxa(`const se = Application('System Events');
-        Application('Warp').activate();
-        se.keystroke('l', { using: ['command down', 'control down'] });
-        se.keystroke('${launchConfig.name}');
-        se.keyCode(36);`);
+    runLaunchConfig(associatedConfig);
 };
 
 launchConfig();
